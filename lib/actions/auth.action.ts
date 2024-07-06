@@ -1,15 +1,35 @@
 "use server";
 
 import { z } from "zod";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { authFormSchema } from "../utils";
 import { db } from "../prisma";
+import { signIn } from "@/auth";
+import { DEFAULT_REDIRECT_LOGIN } from "@/routes";
+import { AuthError } from "next-auth";
 
 const formSchema = authFormSchema("sign-up");
 export const Login = async (data: z.infer<typeof formSchema>) => {
-  console.log(data);
-  if (!data) return { error: "Error ocured" };
-  return { success: "Email sent!" };
+  try {
+    console.log(data);
+    const validData = formSchema.safeParse(data)
+    if (!validData.success) return { error: "Invalid inputs" };
+  
+    const {email, password} = validData.data;
+
+    await signIn('credentials', {
+      email, password, redirectTo: DEFAULT_REDIRECT_LOGIN
+    })
+
+  } catch (err) {
+    if(err instanceof AuthError){
+      switch (err.type) {
+        case "CredentialsSignin":
+          return {error: "Invalide Credencial"}
+      }
+    }
+  }
+
 };
 
 export const Register = async (values: z.infer<typeof formSchema>) => {
