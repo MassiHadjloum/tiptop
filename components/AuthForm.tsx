@@ -11,11 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { authFormSchema } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import CustomInput from "./CustomInput";
 import { Login, Register } from "@/lib/actions/auth.action";
 import FormMessage from "./FormMessage";
 import { db } from "@/lib/prisma";
+import Social from "./Social";
 // import { signIn, signOut, useSession } from "next-auth/react";
 // import { signIn, signUp } from "@/lib/actions/user.action";
 
@@ -25,6 +26,9 @@ const AuthForm = ({ type }: { type: string }) => {
     error: "",
     success: "",
   });
+  const searchParams = useSearchParams()
+  const urlError = searchParams.get("error") === "OAuthAccountNotLinked" 
+  ? "Email already in use with another provider" : ""
   const [isPending, setTransition] = useTransition();
   const router = useRouter();
 
@@ -43,8 +47,8 @@ const AuthForm = ({ type }: { type: string }) => {
         setTransition(() => {
           Login(data).then((data) => {
             setMessage({
-              error: data.error ?? "",
-              success: data.success ?? "",
+              error: data?.error ?? "",
+              success: data?.success ?? "",
             });
           });
         });
@@ -76,17 +80,6 @@ const AuthForm = ({ type }: { type: string }) => {
   return (
     <section className="auth-form">
       <header className="flex flex-col gap-5 md:gap-8">
-        <Link href="/" className=" cursor-pointer items-center gap-1 flex">
-          <Image
-            src="/icons/logo.svg"
-            width={34}
-            height={34}
-            alt="Horizen-logo"
-          />
-          <h1 className="text-26 font-ibm-plex-serif font-bold text-black-1">
-            Horizen{" "}
-          </h1>
-        </Link>
         <div className="flex flex-col gap-1 md:gap-3">
           <h1 className="text-24 lg:text-36 font-semibold text-gray-900">
             {user ? "Link Account" : type === "sign-in" ? "Sign Up" : "Sign In"}{" "}
@@ -157,7 +150,7 @@ const AuthForm = ({ type }: { type: string }) => {
                 name="password"
                 type="password"
               />
-              <FormMessage message={message.error} type="ERROR" />
+              <FormMessage message={message.error || urlError} type="ERROR" />
               <FormMessage message={message.success} type="SUCCESS" />
               <div className="flex justify-center flex-col gap-4">
                 <Button
@@ -177,7 +170,7 @@ const AuthForm = ({ type }: { type: string }) => {
                   )}
                 </Button>
               </div>
-              <div className="flex justify-center flex-col gap-4">
+              {/* <div className="flex justify-center flex-col gap-4">
                 <Button
                   className="form-btn bg-des"
                   type="button"
@@ -193,7 +186,8 @@ const AuthForm = ({ type }: { type: string }) => {
                     type === "sign-in" && "Sign In with Google"
                   )}
                 </Button>
-              </div>
+              </div> */}
+              <Social />
             </form>
           </Form>
 

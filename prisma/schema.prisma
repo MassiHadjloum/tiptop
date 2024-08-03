@@ -5,7 +5,10 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 //npx prisma init    
-//npx prisma generate  => to generate the model defined
+//npx prisma generate         => to generate the model defined
+//npx prisma db push          => to generate tables in the database
+//npx prisma studio           => to start the prisma ui on local : on port 5555
+//npm prisma migrate reset    => to reset the enteir database
 
 generator client {
   provider = "prisma-client-js"
@@ -16,23 +19,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  ADMIN
+  USER
+  EMPLOYEE
+}
+
 model User {
   id          String   @id @default(cuid())
-  email       String   @unique
-  passwrd     String?
-  firstName   String
-  lastName    String
-  userName    String   @unique
-  dateOfBirth DateTime
-  phoneNumber String
+  email       String?   @unique
+  password    String?
+  name   String?
+  userName    String?  @unique
+  dateOfBirth DateTime?
+  phoneNumber String?
+  role        UserRole @default(USER)
 
   emailVerified DateTime?
   image         String?
   // Session       Session[]
-  Account       Account?
+  Account       Account[]
   // Optional for WebAuthn support
   // Authenticator Authenticator[]
- 
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -52,10 +61,10 @@ model Account {
   session_state            String?
   refresh_token_expires_in Int?
   user                     User?   @relation(fields: [userId], references: [id])
- 
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
- 
+
   @@unique([provider, providerAccountId])
   @@index([userId])
 }
@@ -66,10 +75,10 @@ model Account {
 //   userId       String
 //   expires      DateTime
 //   user         User     @relation(fields: [userId], references: [id])
- 
+
 //   createdAt DateTime @default(now())
 //   updatedAt DateTime @updatedAt
- 
+
 //   @@index([userId])
 // }
 
@@ -77,6 +86,6 @@ model Account {
 //   identifier String
 //   token      String
 //   expires    DateTime
- 
+
 //   @@unique([identifier, token])
 // }

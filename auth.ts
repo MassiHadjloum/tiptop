@@ -1,35 +1,74 @@
-import NextAuth from "next-auth"
-import {PrismaAdapter} from "@auth/prisma-adapter"
-import authConfig from "@/auth.config"
-import { db } from "./lib/prisma"
+import NextAuth, { type DefaultSession } from "next-auth";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import authConfig from "@/auth.config";
+import { db } from "./lib/prisma";
+import { getUserById } from "./lib/actions/auth.action";
+
+type ExtendedUser = DefaultSession["user"] & {
+  role: "ADMIN" | "USER" | "EMPLOYEE";
+};
+
+declare module "next-auth" {
+  interface Session {
+    user: ExtendedUser;
+  }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // nextAuth will always redirect to this route when something goes wrong
+  pages: {
+    signIn: '/sign-in',
+    error: '/error'
+  },
+  events: {
+    async linkAccount({user}){
+      await db.user.update({
+        where: {id: user.id},
+        data: {emailVerified: new Date()}
+      })
+    }
+  },
+  callbacks: {
+    // async signIn({ user }) {
+    //     const exestingUser = await getUserById(user.id!);
+    //     if(!exestingUser || !exestingUser.emailVerified) {
+    //       return false;
+    //     }
+    //   return true;
+    // },
+    async session({ token, session }) {
+      console.log(token);
+      if (token.sub && session.user) {
+        session.user.id = token.sub;
+      }
+      if (token.role && session.user) {
+        session.user.role = token.role as "ADMIN" | "USER" | "EMPLOYEE";
+      }
+      return session;
+    },
+    async jwt({ token }) {
+      if (!token.sub) return token; // loged out
+      const exestingUser = await getUserById(token.sub);
+      if (!exestingUser) return token;
+      token.role = exestingUser.role;
+      return token;
+    },
+  },
   adapter: PrismaAdapter(db),
-  session: {strategy: 'jwt'},
- ...authConfig
-})
+  session: { strategy: "jwt" },
+  ...authConfig,
+});
 
-// .env.local
-// DB_HOST=localhost
-// DB_USER=myuser
-// DB_PASSWORD=mypassword
-// DB_NAME=tiptop
+// import NextAuth from "next-auth";
+// import { PrismaAdapter } from "@auth/prisma-adapter"; // Correct the import path if necessary
+// import { db } from "./lib/prisma";
+// import authConfig from "@/auth.config"; // Ensure the path is correct
 
-
-// AUTH_SECRET=mSaxQBtqqQbdhBoCFnHMLxNLmPzb0DaiMInMkbmeZkg=
-// NEXT_AUTH_URL=http://localhost:3000
-
-// GOOGLE_CLIENT_ID=464690717192-fa2tnf4g606vjttiop7emfmr2mqhasrm.apps.googleusercontent.com
-// GOOGLE_CLIENT_SECRET=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
-
-// FACEBOOK_CLIENT_ID=
-// FACEBOOK_CLIENT_SECRET=
-
-// .env
-// # Environment variables declared in this file are automatically made available to Prisma.
-// # See the documentation for more detail: https://pris.ly/d/prisma-schema#accessing-environment-variables-from-the-schema
-
-// # Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
-// # See the documentation for all the connection string options: https://pris.ly/d/connection-strings
-
-// DATABASE_URL="mysql://myuser:mypassword@localhost:3306/tiptop?schema=public?connection_limit=10"
+// export const {
+//   handlers: {GET, POST},
+//   signIn, signOut, auth
+// } = NextAuth({
+//   adapter: PrismaAdapter(db),
+//   session: {strategy: 'jwt'},
+//   ...authConfig
+// })

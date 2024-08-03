@@ -9,8 +9,12 @@ import bcrypt from "bcryptjs"
 
 const formSchema = authFormSchema("sign-in");
 
-export default {
+const authConfig = {
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET
+    }), Facebook,
     Credentials({
       async authorize(credential) {
         const validatedFields = formSchema.safeParse(credential)
@@ -28,5 +32,8 @@ export default {
         return null
       }
     }),
-    Google, Facebook],
+    
+  ],
 } satisfies NextAuthConfig;
+
+export default authConfig

@@ -8,11 +8,12 @@ import { signIn } from "@/auth";
 import { DEFAULT_REDIRECT_LOGIN } from "@/routes";
 import { AuthError } from "next-auth";
 
-const formSchema = authFormSchema("sign-up");
+const formSchema = authFormSchema("sign-in");
 export const Login = async (data: z.infer<typeof formSchema>) => {
   try {
-    console.log(data);
     const validData = formSchema.safeParse(data)
+    console.log("==== ",validData);
+    console.log("==== ",data);
     if (!validData.success) return { error: "Invalid inputs" };
   
     const {email, password} = validData.data;
@@ -26,8 +27,11 @@ export const Login = async (data: z.infer<typeof formSchema>) => {
       switch (err.type) {
         case "CredentialsSignin":
           return {error: "Invalide Credencial"}
+        default:
+          return { error: "Something went wrong !!!"}
       }
     }
+    throw err;
   }
 
 };
@@ -39,16 +43,12 @@ export const Register = async (values: z.infer<typeof formSchema>) => {
   const {
     email,
     password,
-    firstName,
-    lastName,
     userName,
     dateOfBirth,
     phoneNumber,
   } = values as {
     email: string;
     password: string;
-    firstName: string;
-    lastName: string;
     userName: string;
     dateOfBirth: string;
     phoneNumber: string;
@@ -63,9 +63,7 @@ export const Register = async (values: z.infer<typeof formSchema>) => {
   await db.user.create({
     data: {
       email,
-      passwrd: hashPassword,
-      firstName,
-      lastName,
+      password: hashPassword,
       dateOfBirth: new Date(dateOfBirth),
       userName,
       phoneNumber,

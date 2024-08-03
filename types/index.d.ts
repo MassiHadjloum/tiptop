@@ -7,6 +7,12 @@ declare type SearchParamProps = {
 
 // ========================================
 
+declare enum UserRole {
+  ADMIN,
+  USER,
+  EMPLOYEE
+}
+
 declare type SignUpParams = {
   firstName: string;
   lastName: string;
