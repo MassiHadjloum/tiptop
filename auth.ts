@@ -29,13 +29,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }
   },
   callbacks: {
-    // async signIn({ user }) {
-    //     const exestingUser = await getUserById(user.id!);
-    //     if(!exestingUser || !exestingUser.emailVerified) {
-    //       return false;
-    //     }
-    //   return true;
-    // },
+    async signIn({ user, account }) {
+      // allow authentication without email verification
+      if(account?.provider !== 'credentials') return true;
+        const exestingUser = await getUserById(user.id!);
+        // bloc the login whiout verification email
+        if(!exestingUser || !exestingUser.emailVerified) {
+          return false;
+        }
+      return true;
+    },
     async session({ token, session }) {
       console.log(token);
       if (token.sub && session.user) {

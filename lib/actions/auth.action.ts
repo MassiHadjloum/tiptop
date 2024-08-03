@@ -7,16 +7,27 @@ import { db } from "../prisma";
 import { signIn } from "@/auth";
 import { DEFAULT_REDIRECT_LOGIN } from "@/routes";
 import { AuthError } from "next-auth";
+import { generateVerificationToken } from "../auth/tokens";
+import { sendVerificationEmail } from "../mail";
 
 const formSchema = authFormSchema("sign-in");
 export const Login = async (data: z.infer<typeof formSchema>) => {
   try {
     const validData = formSchema.safeParse(data)
-    console.log("==== ",validData);
-    console.log("==== ",data);
     if (!validData.success) return { error: "Invalid inputs" };
   
     const {email, password} = validData.data;
+    const existingUser = await getUserByEmail(email)
+
+    if(!existingUser || !existingUser.email || !existingUser.password) {
+      return {error: "Email does not exist."}
+    }
+
+    if(!existingUser.emailVerified) {
+      const vereficationToken = await generateVerificationToken(existingUser.email)
+      await sendVerificationEmail(vereficationToken.email, vereficationToken.token);
+      return {success: "Confirmation email sent."}
+    }
 
     await signIn('credentials', {
       email, password, redirectTo: DEFAULT_REDIRECT_LOGIN
@@ -38,7 +49,8 @@ export const Login = async (data: z.infer<typeof formSchema>) => {
 
 export const Register = async (values: z.infer<typeof formSchema>) => {
   console.log(values);
-  if (!values) return { error: "Error ocured" };
+  const validData = formSchema.safeParse(values)
+  if (!validData.success) return { error: "Invalid inputs" };
 
   const {
     email,
@@ -70,7 +82,11 @@ export const Register = async (values: z.infer<typeof formSchema>) => {
     },
   });
 
-  return { success: "Email sent!" };
+  const vereficationToken = await generateVerificationToken(email)
+  console.log("------- ", vereficationToken)
+
+  await sendVerificationEmail(vereficationToken.email, vereficationToken.token);
+  return { success: "Confirmation Email sent!" };
 };
 
 export const getUserByEmail = async (email: string) => {

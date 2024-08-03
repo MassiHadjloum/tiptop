@@ -5,6 +5,8 @@ import { Button } from './ui/button'
 import { Loader2 } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import { DEFAULT_REDIRECT_LOGIN } from '@/routes';
+import {FcGoogle} from "react-icons/fc"
+import { ImFacebook2 } from "react-icons/im";
 
 const Social = () => {
   const [isPending, setTransition] = useTransition();
@@ -15,10 +17,13 @@ const Social = () => {
   }
   return (
     <>
-      <div className='flex justify-center flex-col gap-4'>
+      <div className='flex justify-center gap-x-2'>
         <Button
-          className="form-btn bg-des"
+          // className="form-btn bg-des"
+          className="w-full bg-cyan-500"
           type="button"
+          size='lg'
+          variant='destructive'
           onClick={() => onClick('google')}
           disabled={isPending}
         >
@@ -28,14 +33,15 @@ const Social = () => {
               Loading ...
             </>
           ) : (
-            "Sign In with Google"
+            <FcGoogle size={25}/>
+            // "Sign In with Google"
           )}
         </Button>
-      </div>
-      <div className='flex justify-center flex-col gap-4'>
         <Button
-          className="form-btn bg-des"
-          type="button"
+          className="w-full bg-green-400"
+          size='lg'
+          // type="button"
+          variant='destructive'
           onClick={() => onClick('facebook')}
           disabled={isPending}
         >
@@ -45,7 +51,8 @@ const Social = () => {
               Loading ...
             </>
           ) : (
-            "Sign In with Facebook"
+            <ImFacebook2 size={25}/>
+            // "Sign In with Facebook"
           )}
         </Button>
       </div>
